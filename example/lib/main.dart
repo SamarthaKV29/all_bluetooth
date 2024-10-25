@@ -215,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.device.name),
+        title: Text(widget.device.name ?? "Unknown"),
         actions: [
           ElevatedButton(
             onPressed: allBluetooth.closeConnection,
@@ -327,7 +327,7 @@ class DeviceListWidget extends StatelessWidget {
                     itemBuilder: (ctx, index) {
                       final device = value[index];
                       return ListTile(
-                        title: Text(device.name),
+                        title: Text(device.name ?? "Unknown"),
                         subtitle: Text(device.address),
                         onTap: () async {
                           allBluetooth.connectToDevice(device.address);

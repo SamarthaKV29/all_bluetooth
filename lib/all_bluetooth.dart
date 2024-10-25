@@ -1,5 +1,7 @@
 library all_bluetooth;
 
+import 'package:flutter/foundation.dart';
+
 import 'all_bluetooth_platform_interface.dart';
 
 part 'helper_functions.dart';

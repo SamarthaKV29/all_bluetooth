@@ -8,8 +8,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.material.internal.ContextUtils
+import com.google.gson.Gson
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
@@ -21,8 +23,12 @@ import java.util.*
 
 /** AllBluetoothPlugin */
 class AllBluetoothPlugin : FlutterPlugin, MethodCallHandler, FlutterActivity() {
+    companion object {
+        const val TAG: String = "AllBluetoothPlugin"
+    }
 
     private val connectionUUID = UUID.fromString("38d00467-9f10-4e96-b045-d9b69303fa33")
+    val gson = Gson()
 
     private lateinit var context: Context
     private lateinit var methodChannel: MethodChannel
@@ -130,19 +136,23 @@ class AllBluetoothPlugin : FlutterPlugin, MethodCallHandler, FlutterActivity() {
             },
             listenToState = {
                 bluetoothStateSink?.success(bluetoothAdapter.isEnabled)
-            },
-            foundDeviceCallback = {
-                val name = it?.name ?: "Unknown name"
-                val address = it?.address ?: "Unknown address"
-                foundDeviceEventSink?.success(
-                    mapOf(
-                        "name" to name,
-                        "address" to address,
-                        "bonded_state" to false
-                    )
-                )
             }
-        )
+        ) { device: BluetoothDevice?, rssi: String ->
+            device?.let {
+                val deviceMap = mapOf(
+                    "name" to it.name,
+                    "address" to it.address,
+                    "bond_state" to it.bondState,
+                    "type" to it.type,
+                    "major_class" to it.bluetoothClass.majorDeviceClass.toString(),
+                    "device_class" to it.bluetoothClass.deviceClass.toString(),
+                    "rssi" to rssi,
+                )
+                Log.d(TAG, "onAttachedToEngine: deviceMap: $deviceMap")
+                foundDeviceEventSink?.success(deviceMap)
+            }
+
+        }
 
         val filter = IntentFilter().apply {
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
@@ -246,6 +256,7 @@ class AllBluetoothPlugin : FlutterPlugin, MethodCallHandler, FlutterActivity() {
             "stop_discovery" -> {
                 closeDiscovery()
             }
+
             "start_advertising" -> {
 
                 val secondDuration = call.arguments as Int?

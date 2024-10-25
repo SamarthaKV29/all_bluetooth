@@ -12,9 +12,11 @@ class BluetoothBroadcast(
     private val bluetoothAdapter: BluetoothAdapter,
     private val listenToState: (Boolean) -> Unit,
     private val listenToConnection: (BluetoothDevice?, Boolean) -> Unit,
-    private val foundDeviceCallback: (BluetoothDevice?) -> Unit,
+    private val foundDeviceCallback: (BluetoothDevice?, String) -> Unit,
 ) : BroadcastReceiver() {
-
+    companion object {
+        const val TAG: String = "BluetoothBroadcast"
+    }
 
     override fun onReceive(context: Context?, intent: Intent?) {
 
@@ -28,6 +30,7 @@ class BluetoothBroadcast(
             intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
         }
 
+        val rssi = intent?.getShortExtra(BluetoothDevice.EXTRA_RSSI, 0)
 
         when (intent?.action) {
             BluetoothAdapter.ACTION_STATE_CHANGED -> {
@@ -36,17 +39,17 @@ class BluetoothBroadcast(
             }
 
             BluetoothDevice.ACTION_ACL_CONNECTED -> {
-                Log.d("Connection changed", "Connected to ${device?.name?:"Unknown device"}")
+                Log.d(TAG, "Connected to ${device?.name ?: "Unknown device"}")
                 listenToConnection(device, true)
             }
 
             BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
-                Log.d("Connection changed", "Disconnected from device")
+                Log.d(TAG, "Disconnected from device")
                 listenToConnection(device, false)
             }
 
             BluetoothDevice.ACTION_FOUND -> {
-                device.let(foundDeviceCallback)
+                foundDeviceCallback(device, rssi.toString())
             }
         }
 
